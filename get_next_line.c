@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: huda-roc <huda-roc@42student.com>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/17 14:42:52 by huda-roc          #+#    #+#             */
-/*   Updated: 2025/11/17 14:43:12 by huda-roc         ###   ########.fr       */
+/*   Created: 2025/11/18 20:35:16 by huda-roc          #+#    #+#             */
+/*   Updated: 2025/11/18 20:35:18 by huda-roc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,18 +18,18 @@ char	*get_next(char *buffer)
 	int		i;
 	int		j;
 
-	if (!buffer || !buffer[0] || !ft_strchr((const char *)buffer, '\n'))
+	i = 0;
+	while (buffer[i] && buffer[i] != '\n')
+		i++;
+	if (!buffer[i])
 	{
 		free(buffer);
 		return (NULL);
 	}
-	i = 0;
-	while (buffer[i] != '\n')
-		i++;
-	i++;
-	temp = malloc((ft_strlen((char const *)buffer) - i) + 1);
+	temp = malloc(sizeof(char) * (ft_strlen(buffer) - i + 1));
 	if (!temp)
-		return (NULL);
+		return (free(buffer), NULL);
+	i++;
 	j = 0;
 	while (buffer[i])
 		temp[j++] = buffer[i++];
@@ -42,75 +42,79 @@ char	*new_line(char *buffer)
 {
 	char	*dest;
 	int		i;
-	int		j;
 
 	i = 0;
 	if (!buffer || !buffer[0])
 		return (NULL);
 	while (buffer[i] && buffer[i] != '\n')
 		i++;
-	dest = malloc (i + 2);
+	if (buffer[i] == '\n')
+		i++;
+	dest = malloc(sizeof(char) * (i + 1));
 	if (!dest)
 		return (NULL);
 	i = 0;
-	j = 0;
 	while (buffer[i] && buffer[i] != '\n')
-		dest[j++] = buffer[i++];
+	{
+		dest[i] = buffer[i];
+		i++;
+	}
 	if (buffer[i] == '\n')
-		dest[j++] = '\n';
-	dest[j] = '\0';
+		dest[i++] = '\n';
+	dest[i] = '\0';
 	return (dest);
-}
-
-char	*free_join(char *buffer, char *temp_buf)
-{
-	char	*temp;
-
-	temp = ft_strjoin((char const *)buffer, (char const *)temp_buf);
-	free (buffer);
-	return (temp);
 }
 
 char	*read_buf(char *buffer, int fd)
 {
-	char	*temp_buf;
-	int		bytes_read;
+	char	*temp;
+	int		bytes;
 
-	bytes_read = 1;
-	temp_buf = malloc(BUFFER_SIZE + 1);
-	if (!temp_buf)
-		return (NULL);
-	while (bytes_read && !ft_strchr(buffer, '\n'))
+	temp = malloc(BUFFER_SIZE + 1);
+	if (!temp)
+		return (free(buffer), NULL);
+	bytes = 1;
+	while (bytes > 0)
 	{
-		bytes_read = read(fd, temp_buf, BUFFER_SIZE);
-		if (bytes_read < 0)
-		{
-			free(temp_buf);
-			free(buffer);
-			buffer = NULL;
-			return (NULL);
-		}
-		if (bytes_read == 0)
+		bytes = read(fd, temp, BUFFER_SIZE);
+		if (bytes == -1)
+			return (free(temp), free(buffer), NULL);
+		if (bytes == 0)
 			break ;
-		temp_buf[bytes_read] = '\0';
-		buffer = free_join(buffer, temp_buf);
+		temp[bytes] = '\0';
+		buffer = ft_strjoin(buffer, temp);
+		if (!buffer)
+			return (free(temp), NULL);
+		if (ft_strchr(temp, '\n'))
+			break ;
 	}
-	return (free(temp_buf), buffer);
+	free(temp);
+	return (buffer);
 }
 
 char	*get_next_line(int fd)
 {
 	static char	*buffer;
-	char		*dest;
+	char		*line;
 
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
 	if (!buffer)
+	{
 		buffer = ft_strdup("");
+		if (!buffer)
+			return (NULL);
+	}
 	buffer = read_buf(buffer, fd);
 	if (!buffer)
 		return (NULL);
-	dest = new_line(buffer);
+	line = new_line(buffer);
+	if (!line)
+	{
+		free(buffer);
+		buffer = NULL;
+		return (NULL);
+	}
 	buffer = get_next(buffer);
-	return (dest);
+	return (line);
 }

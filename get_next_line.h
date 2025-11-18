@@ -22,7 +22,7 @@
 # include <fcntl.h>
 
 char	*get_next_line(int fd);
-char	*ft_strjoin(const char *s1, const char *s2);
+char	*ft_strjoin(char *s1, char *s2);
 char	*ft_strchr(const char *str, int c);
 char	*ft_strdup(char const *str);
 
